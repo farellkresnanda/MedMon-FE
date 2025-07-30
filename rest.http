@@ -1,0 +1,472 @@
+###
+GET http://localhost:7780/instagram/update-followers-kdm
+Content-Type: application/json
+
+###
+GET http://localhost:7770/label/v1/labeling?kategori=dishub_medmon
+Content-Type: application/json
+
+###
+curl "http://localhost:7775/label/v1/post-labeling?kategori=parfum"
+
+###
+GET http://localhost:7770/label/v1/post-labeling?kategori=dishub_medmon
+Content-Type: application/json
+
+###
+GET http://localhost:7780/label/v1/comments-coding
+Content-Type: application/json
+
+###
+GET http://localhost:7770/labelv2/v2/post-labeling?kategori=parfum
+Content-Type: application/json
+
+###
+curl "http://localhost:7770/labelv2/v2/post-labeling?kategori=parfum"
+
+###
+GET http://localhost:7770/labelv2/v2/comments-coding?kategori=disdik_medmon
+Content-Type: application/json
+
+###
+GET http://localhost:7770/label/v1/reply-coding/
+Content-Type: application/json
+
+###
+GET http://localhost:7770/label/v1/comments-sentiment
+Content-Type: application/json
+
+###
+GET http://localhost:7780/label/v1/reply-sentiment
+Content-Type: application/json
+
+
+
+
+###
+POST http://localhost:7780/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "disparbud@focuson.test",
+  "password": "123"
+}
+
+### Get all products
+GET http://localhost:7780/api/data/calculateFairScore
+
+
+
+
+
+### GET processData
+GET http://localhost:7780/api/data/getData
+
+### GET processData
+GET http://localhost:7780/api/getFollowers?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=Instagram
+
+### GET processData
+GET http://localhost:7780/api/getActivities?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=Instagram
+
+### GET processData
+GET http://localhost:7780/api/getInteractions?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+### GET processData
+GET http://localhost:7770/api/getResponsiveness?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+### GET processData
+GET http://localhost:7770/api/getFairScores?kategori=disparbud&start_date=2025-04-01&end_date=2025-04-30&platform=Instagram
+
+
+### GET processData
+GET http://localhost:7780/api/getAllPost?page=1&perPage=5&kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+### GET rank
+GET http://localhost:7770/api/getActivitiesRanking?kategori=disparbud&start_date=2025-03-01&end_date=2025-03-31&platform=Instagram
+
+### GET fair score
+GET http://localhost:7780/api/getFairScores?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=Instagram
+
+### GET fair score
+GET http://localhost:7770/api/getFairRanking?kategori=disparbud&start_date=2025-02-01&end_date=2025-02-28&platform=TikTok
+
+### STEP 1 ###
+
+### Post addListAkun
+POST http://localhost:7780/api/addListAkun
+POST http://localhost:7780/api/addListAkun
+Content-Type: application/json
+
+{
+    "client_account": "Ismail",
+    "platform": "instagram",
+    "kategori": "Ismail",
+    "username": "sys_interrupted"
+}
+
+### Get ListAkun
+GET http://localhost:7780/accounts/ListAkun
+GET http://localhost:7780/accounts/ListAkun
+
+### Delete ListAkun
+DELETE http://localhost:7780/api/deleteListAkun/129
+DELETE http://localhost:7780/api/deleteListAkun/129
+
+### Edit ListAkun
+PUT http://localhost:7780/api/editListAkun/130
+PUT http://localhost:7780/api/editListAkun/130
+Content-Type: application/json
+
+{
+    "client_account": "Anugrah",
+    "platform": "instagram",
+    "kategori": "Anugrah",
+    "username": "ismailisme"
+}
+
+###
+GET http://localhost:7770/news/getNews
+
+### Get Instagram User Comment custom request
+GET http://localhost:7780/instagram/getCommentByCode?kategori=prokopim_bekasikab
+
+###
+List Akun Mitra / Kategori nya
+- opdbekasikab bekasi khusus (instagram) doang v
+- prokopim_bekasikab (Instagram) v 
+- disparbud (Instagram dan TikTok) v
+- disparbud_competitor (Instagram dan TikTok) v
+- disparbud_ambassador (Instagram dan TikTok) v
+- opdjabar (Instagram & TikTok) v
+- gubernur_jabar (Instagram & TikTok) v
+- opdbandung (Instagram)
+- sentul_media (tiktok) deprecated
+# - tmii (tiktok) deprecated
+
+### Get Instagram User Data (Deprecated // langsung panggil user post nya saja)
+GET http://localhost:7770/instagram/getData?kategori=opdbandung
+
+### Get Tiktok User Data
+GET http://localhost:7770/tiktok/getData?kategori=gubernur_jabar
+
+### Get Instagram User Post
+GET http://localhost:7770/instagram/getPost?kategori=opdbandung
+
+### Get TikTok User Post
+GET http://localhost:7770/tiktok/getPost?kategori=parfum
+
+### Get Instagram User Comment
+GET http://localhost:7770/instagram/getComment?kategori=disparbud_ambassador
+
+### Get TikTok User Comment
+GET http://localhost:7775/tiktok/getComment?kategori=parfum
+
+### STEP 2
+
+### Proses Responsiveness khusus 7770
+POST http://localhost:7770/api/file/calculateResponsiveness
+Content-Type: application/json
+
+{
+    "kategori": "disparbud_ambassador"
+}
+
+### Proses Responsiveness
+POST http://localhost:7790/file/calculateResponsiveness
+Content-Type: application/json
+
+{
+    "kategori": "gubernur_jabar"
+}
+
+###
+List Akun Mitra / Kategori nya
+- opdbekasikab bekasi khusus (instagram) doang
+- prokopim_bekasikab (Instagram)
+- disparbud (Instagram & TikTok) 
+- disparbud_competitor (Instagram & TikTok) 
+- disparbud_ambassador (Instagram & TikTok)
+# - kdm_media (Instagram & TikTok) deprecated
+- opdjabar (Instagram & TikTok)
+- gubernur_jabar (Instagram & TikTok)
+- opdbandung (Instagram)
+- sentul_media (tiktok)
+# - tmii (tiktok) deprecated
+
+### post addDataUser per hari
+POST http://localhost:7775/fair/addDataUser
+Content-Type: application/json
+
+{
+    "kategori": "opdbandung",
+    "platform": "Instagram"
+}
+
+### post processData
+POST http://localhost:7770/fair/processData
+Content-Type: application/json
+
+{
+    "start_date": "2025-04-01",
+    "end_date": "2025-04-30",
+    "kategori": "disparbud_ambassador",
+    "platform": "Instagram"
+}
+
+### post processData
+POST http://localhost:7774/fair/processData
+Content-Type: application/json
+
+{
+    "start_date": "2025-01-01",
+    "end_date": "2025-04-30",
+    "kategori": "opdjabar",
+    "platform": "TikTok"
+}
+
+### post processData Perbulan Deprecated
+POST http://localhost:7770/fair/processDataFair
+Content-Type: application/json
+
+{
+    "start_date": "2025-01-01",
+    "end_date": "2025-03-31",
+    "kategori": "tmii",
+    "platform": "TikTok"
+}
+
+### Proses Performa Konten
+POST http://localhost:7776/api/prosesPerformaKonten
+Content-Type: application/json
+
+{
+  "startDate": "2025-01-01",
+  "endDate": "2025-5-30"
+}
+
+###
+curl -X POST http://localhost:7773/api/prosesPerformaKonten \
+-H "Content-Type: application/json" \
+-d '{
+  "startDate": "2025-01-01",
+  "endDate": "2025-5-30"
+}'
+
+### Get Instagram User Data
+GET http://localhost:7780/api/getAllUsers?kategori=disparbud&platform=Instagram&username=budpardepok
+
+### Get All Username Data
+GET http://localhost:7780/api/getAllUsername?kategori=disparbud&platform=Instagram
+
+### Get Picture Data
+GET http://localhost:7780/api/getPictureData?kategori=disparbud&platform=Instagram&username=disparbudbandungbarat
+
+### Get Fair Data for Insights
+GET http://localhost:7780/api/getFairDataInsights?kategori=disparbud&platform=Instagram&month=2025-01&username=purwakartapariwisata
+
+### Get Ai Summary
+GET http://localhost:7780/api/getFairSummary?username=smilingbogorcity&month=2025-01&kategori=disparbud&platform=Instagram
+
+
+### Daily Data // Growth Metrics
+### Instagram
+### GET Daily Followers
+GET http://localhost:7780/api/getDailyLikes?kategori=disparbud&start_date=2025-02-01&end_date=2025-02-28&platform=Instagram
+
+### GET Daily Likes
+GET http://localhost:7780/api/getDailyLikes?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=Instagram
+
+### GET Daily Views
+GET http://localhost:7780/api/getDailyViews?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=Instagram
+
+### GET Daily Comments
+GET http://localhost:7780/api/getDailyComments?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=Instagram
+
+### TikTok
+### GET Daily Followers
+GET http://localhost:7780/api/getDailyFollowers?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+### GET Daily Likes
+GET http://localhost:7780/api/getDailyLikes?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+### GET Daily Views
+GET http://localhost:7780/api/getDailyViews?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+### GET Daily Comments
+GET http://localhost:7780/api/getDailyComments?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+### GET Daily Saves
+GET http://localhost:7780/api/getDailySaves?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+# ### GET Daily Downloads
+# GET http://localhost:7780/api/getDailyDownloads?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+### GET Daily Shares
+GET http://localhost:7780/api/getDailyShares?kategori=disparbud&start_date=2025-01-01&end_date=2025-01-31&platform=TikTok
+
+
+
+
+###
+GET http://localhost:7780/api/getGrowthData?username=smilingbogorcity&start_date=2025-02-01&end_date=2025-02-28&platform=Instagram
+
+###
+POST http://localhost:7780/file/exportPosts
+Content-Type: application/json
+
+{
+  "kategori": "prokopim_bekasikab",
+  "platform": "Instagram",
+  "start_date": "2025-01-01",
+  "end_date": "2025-02-28"
+}
+
+###
+POST http://localhost:7780/file/exportFair
+Content-Type: application/json
+
+{
+  "kategori": "prokopim_bekasikab",
+  "platform": "Instagram",
+  "start_date": "2025-02-01",
+  "end_date": "2025-02-28"
+}
+
+###
+GET http://localhost:7780/api/getAllSearchUsername?&platform=Instagram&kategori=prokopim_bekasikab&search=pemkabbekasi
+
+###
+GET http://localhost:7780/api/getTotalPost?&platform=TikTok&kategori=disparbud&search=disparbudmajalengka&start_date=2025-02-01&end_date=2025-02-28
+
+###
+GET http://localhost:7780/api/getAllPost?perPage=2&page=1&platform=Instagram&kategori=disparbud&start_date=2025-02-01&end_date=2025-02-28&orderBy=performa_konten&direction=desc&username=
+
+###
+GET http://localhost:7780/api/getPost?kategori=disparbud&username=disbudpar.bdg&platform=Instagram&start_date=2025-02-01&end_date=2025-02-28
+
+###
+GET http://localhost:7770/instagram/getDataPostByKeywords?kategori=diskom_medmon
+
+###
+GET http://localhost:7771/tiktok/getDataPostByKeywords?kategori=diskom_medmon
+
+###
+curl "http://localhost:7770/tiktok/getDataPostByKeywords?kategori=disdik_medmon"
+
+###
+GET http://localhost:7772/youtube/getDataPostByKeywords?start_date=2025-05-05&end_date=2025-05-31&kategori=diskom_medmon
+
+###
+GET http://localhost:7773/facebook/getDataPostByKeywords?start_date=2025-05-05&end_date=2025-05-31&kategori=diskom_medmon
+
+###
+GET http://localhost:7770/news/getNews
+
+###
+GET http://localhost:7770/
+
+###
+POST http://localhost:7770/fair/update-followers?platform=TikTok
+
+###
+POST http://localhost:7780/youtube/getCommentv2
+Content-Type: application/json
+
+{
+    "kategori": "kdm",
+    "fromStart": "true",
+    "unique_id_post": [
+        "fCBzUwoMSW8"
+    ]
+}
+###
+POST http://localhost:7770/youtube/getCommentv3
+Content-Type: application/json
+
+{
+    "kategori": "kdm",
+    "unique_id_post": [
+        "ygICDPDGQF8",
+        "Qr_mEfF_MD8"
+    ]
+}
+
+###
+POST http://localhost:7780/tiktok/getCommentv2
+Content-Type: application/json
+
+{
+    "kategori": "kdm",
+    "fromStart": "true",
+    "unique_id_post": [
+        "7467421508596485382"
+    ]
+}
+
+###
+POST http://localhost:7790/facebook/getCommentv2
+Content-Type: application/json
+
+{
+    "kategori": "kdm",
+    "unique_id_post": "1A5uWJNh94"
+}
+
+###
+POST http://localhost:7770/youtube/getCommentv3
+Content-Type: application/json
+
+{
+    "kategori": "testing",
+    "fromStart": "true",
+    "unique_id_post": [
+        "0NB1EzJGQyk"
+        
+    ]
+}
+
+###
+POST http://localhost:7780/instagram/getPostDataByCode
+Content-Type: application/json
+
+{
+    "kategori": "kdm",
+    "platform": "Instagram",
+    "client_account": "kdm@focuson.id",
+    "post_code": [
+        "DIsYoFHzAxr",
+        "DIs-9W_MzMS",
+        "DIsiQ75P_fN"
+    ]
+}
+
+###
+GET http://localhost:7780/instagram/update-followers?kategori=disparbud&platform=Instagram
+
+###
+GET http://localhost:7780/api/getInteractions?platform=Instagram&kategori=disparbud&start_date=2025-02-01&end_date=2025-02-28
+
+###
+GET http://localhost:7770/api/getFollowersRanking?platform=TikTok&kategori=disparbud&start_date=2025-02-01&end_date=2025-02-28
+
+###
+https://vt.tiktok.com/ZSMo2Hesu/
+https://vt.tiktok.com/ZSMomaajM/
+
+###
+GET http://localhost:7770/tiktok/getCommentByCode?kategori=kdm&url=https://www.tiktok.com/@rie_seller/video/7494135886255312183
+
+###
+GET http://localhost:7770/api/file/exportFair?kategori=disparbud&platform=Instagram&start_date=2025-03-01&end_date=2025-03-31
+
+###
+GET http://localhost:7780/wordCloud/generateWordCloud/kdm_presiden
+
+###
+GET http://localhost:7780/wordCloud/generateWordcloudFromExcel
+
+###
+GET http://localhost:7780/instagram/getCommentByCode?kategori=diskom_medmon
+
+###
+GET http://103.127.139.139:3007/tiktok/getDataPostByKeywords?kategori=diskom_medmon
