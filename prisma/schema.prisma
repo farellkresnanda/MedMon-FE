@@ -8,55 +8,30 @@ datasource db {
 }
 
 model childComments {
-  child_comment_id          Int          @id @default(autoincrement())
-  client_account            String?      @db.VarChar(255)
-  kategori                  String?      @db.VarChar(255)
-  platform                  String?      @db.VarChar(255)
-  unique_id_post            String?      @db.VarChar(500)
-  comment_unique_id         String?      @db.VarChar(255)
-  child_comment_unique_id   String?      @unique(map: "child_comment_unique_id") @db.VarChar(255)
-  created_at                DateTime?    @db.DateTime(0)
-  child_commenter_username  String?      @db.VarChar(255)
-  child_commenter_userid    String?      @db.VarChar(255)
-  child_comment_text        String?      @db.LongText
-  child_comment_like_count  Int?         @default(0)
+  child_comment_id          Int       @id @default(autoincrement())
+  client_account            String?   @db.VarChar(255)
+  kategori                  String?   @db.VarChar(255)
+  platform                  String?   @db.VarChar(255)
+  unique_id_post            String?   @db.VarChar(500)
+  comment_unique_id         String?   @db.VarChar(255)
+  child_comment_unique_id   String?   @unique(map: "child_comment_unique_id") @db.VarChar(255)
+  created_at                DateTime? @db.DateTime(0)
+  child_commenter_username  String?   @db.VarChar(255)
+  child_commenter_userid    String?   @db.VarChar(255)
+  child_comment_text        String?   @db.LongText
+  child_comment_like_count  Int?      @default(0)
   is_created_by_media_owner Boolean?
-  
+
   // Missing fields
-  label                     String?      @db.VarChar(255)
-  sentiment                 String?      @db.VarChar(255)
+  label     String? @db.VarChar(255)
+  sentiment String? @db.VarChar(255)
 
   // Add relationships
-  post                      posts?       @relation(fields: [unique_id_post], references: [unique_id_post])
-  mainComment               mainComments? @relation(fields: [comment_unique_id], references: [comment_unique_id])
+  post        posts?        @relation(fields: [unique_id_post], references: [unique_id_post])
+  mainComment mainComments? @relation(fields: [comment_unique_id], references: [comment_unique_id])
 
   @@index([unique_id_post])
   @@index([comment_unique_id])
-}
-
-model dailyFairScores {
-  id                   Int       @id @default(autoincrement())
-  list_id              Int
-  client_account       String?   @db.VarChar(255)
-  kategori             String?   @db.VarChar(255)
-  platform             String?   @db.VarChar(255)
-  username             String?   @db.VarChar(255)
-  date                 DateTime? @db.Date
-  followers            Int?
-  followers_score      Float?    @db.Float
-  followers_bobot      Float?    @db.Float
-  activities           Float?    @db.Float
-  activities_score     Float?    @db.Float
-  activities_bobot     Float?    @db.Float
-  interactions         Float?    @db.Float
-  interactions_score   Float?    @db.Float
-  interactions_bobot   Float?    @db.Float
-  responsiveness       Float?    @db.Float
-  responsiveness_score Float?    @db.Float
-  responsiveness_bobot Float?    @db.Float
-  fair_score           Float?    @db.Float
-
-  @@unique([list_id, client_account, kategori, platform, username, date], map: "unique_combination")
 }
 
 model likes {
@@ -71,7 +46,7 @@ model likes {
   created_at     DateTime? @db.DateTime(0)
 
   // Relation to posts
-  post           posts?    @relation(fields: [post_code], references: [post_code])
+  post posts? @relation(fields: [post_code], references: [post_code])
 
   @@unique([post_code(length: 100), user_id(length: 100), username(length: 100), fullname(length: 100)], map: "unique_like")
 }
@@ -92,37 +67,30 @@ model listNews {
   query          String @db.VarChar(255)
 }
 
-model login {
-  login_id Int    @id @default(autoincrement())
-  email    String @db.VarChar(255)
-  password String @db.VarChar(255)
-  type     String @db.VarChar(255)
-}
-
 model mainComments {
-  main_comment_id           Int       @id @default(autoincrement())
-  client_account            String?   @db.VarChar(255)
-  kategori                  String?   @db.VarChar(255)
-  platform                  String?   @db.VarChar(255)
-  user_id                   String?   @db.VarChar(255)
-  username                  String?   @db.VarChar(255)
-  unique_id_post            String?   @db.VarChar(500)
-  comment_unique_id         String?   @unique(map: "comment_unique_id") @db.VarChar(255)
-  created_at                DateTime? @db.DateTime(0)
-  child_comment_count       String?   @db.VarChar(255)
-  commenter_username        String?   @db.VarChar(255)
-  commenter_userid          String?   @db.VarChar(255)
-  comment_text              String?   @db.LongText
-  comment_like_count        Int?      @default(0)
-  
+  main_comment_id     Int       @id @default(autoincrement())
+  client_account      String?   @db.VarChar(255)
+  kategori            String?   @db.VarChar(255)
+  platform            String?   @db.VarChar(255)
+  user_id             String?   @db.VarChar(255)
+  username            String?   @db.VarChar(255)
+  unique_id_post      String?   @db.VarChar(500)
+  comment_unique_id   String?   @unique(map: "comment_unique_id") @db.VarChar(255)
+  created_at          DateTime? @db.DateTime(0)
+  child_comment_count String?   @db.VarChar(255)
+  commenter_username  String?   @db.VarChar(255)
+  commenter_userid    String?   @db.VarChar(255)
+  comment_text        String?   @db.LongText
+  comment_like_count  Int?      @default(0)
+
   // Missing fields found in controllers
-  child_comments_processed  Boolean?  @default(false)
-  label                     String?   @db.VarChar(255)
-  sentiment                 String?   @db.VarChar(255)
+  child_comments_processed Boolean? @default(false)
+  label                    String?  @db.VarChar(255)
+  sentiment                String?  @db.VarChar(255)
 
   // Add relationships
-  post                      posts?    @relation(fields: [unique_id_post], references: [unique_id_post])
-  childComments             childComments[]
+  post          posts?          @relation(fields: [unique_id_post], references: [unique_id_post])
+  childComments childComments[]
 
   @@index([unique_id_post])
   @@index([platform, kategori])
@@ -143,51 +111,54 @@ model news {
   source_favicon_url     String?   @db.LongText
   source_publication_id  String?   @db.VarChar(255)
   platform               String?   @db.VarChar(255)
-  
+
   // Missing field found in routes
-  label                  String?   @db.VarChar(255)
+  label String? @db.VarChar(255)
 }
 
 model posts {
-  post_id               Int       @id @default(autoincrement())
-  client_account        String?   @db.VarChar(255)
-  kategori              String?   @db.VarChar(255)
-  platform              String?   @db.VarChar(255)
-  user_id               String?   @db.VarChar(255)
-  unique_id_post        String?   @unique(map: "unique_id_post") @db.VarChar(255)
-  post_code             String?   @unique(map: "unique_post_code") @default("") @db.VarChar(255)
-  is_pinned             Boolean?  @default(false)
-  username              String?   @db.VarChar(255)
-  followers             Int?      @default(0)
-  following             Int?      @default(0)
-  created_at            DateTime? @default(now()) @db.DateTime(0)
-  updated_at            DateTime? @updatedAt @db.DateTime(0)
-  thumbnail_url         String?   @db.LongText
-  caption               String?   @db.LongText
-  comments              Int?      @default(0)
-  likes                 Int?      @default(0)
-  playCount             Int?      @default(0)
-  shareCount            Int?      @default(0)
-  downloadCount         Int?      @default(0)
-  collectCount          Int?      @default(0)
-  media_name            String?   @default("") @db.VarChar(255)
-  product_type          String?   @default("") @db.VarChar(255)
-  tagged_users          String?   @default("") @db.LongText
-  
-  // Missing fields found in routes/controllers
-  performa_konten       Float?    @default(0)
-  comments_processed    Boolean?  @default(false)
-  label                 String?   @db.VarChar(255)
-  sentiment             String?   @db.VarChar(255)
-  
-  // Add missing fields from saveDataIg.js controller
-  collabs               Int?      @default(0)
-  collabs_with          String?   @default("") @db.LongText
-  responsiveness_post   Float?    @default(0) @db.Float
+  post_id        Int       @id @default(autoincrement())
+  client_account String?   @db.VarChar(255)
+  kategori       String?   @db.VarChar(255)
+  platform       String?   @db.VarChar(255)
+  user_id        String?   @db.VarChar(255)
+  unique_id_post String?   @unique(map: "unique_id_post") @db.VarChar(255)
+  post_code      String?   @unique(map: "unique_post_code") @default("") @db.VarChar(255)
+  is_pinned      Boolean?  @default(false)
+  username       String?   @db.VarChar(255)
+  followers      Int?      @default(0)
+  following      Int?      @default(0)
+  created_at     DateTime? @default(now()) @db.DateTime(0)
+  updated_at     DateTime? @updatedAt @db.DateTime(0)
+  thumbnail_url  String?   @db.LongText
+  caption        String?   @db.LongText
+  comments       Int?      @default(0)
+  likes          Int?      @default(0)
+  playCount      Int?      @default(0)
+  shareCount     Int?      @default(0)
+  downloadCount  Int?      @default(0)
+  collectCount   Int?      @default(0)
+  media_name     String?   @default("") @db.VarChar(255)
+  product_type   String?   @default("") @db.VarChar(255)
+  tagged_users   String?   @default("") @db.LongText
 
-  mainComments          mainComments[]
-  childComments         childComments[]
-  postLikes             likes[]
+  // Missing fields found in routes/controllers
+  performa_konten    Float?   @default(0)
+  comments_processed Boolean? @default(false)
+  label              String?  @db.VarChar(255)
+  sentiment          String?  @db.VarChar(255)
+
+  // Add missing fields from saveDataIg.js controller
+  collabs             Int?    @default(0)
+  collabs_with        String? @default("") @db.LongText
+  responsiveness_post Float?  @default(0) @db.Float
+
+  // Add missing fields from responsiveness_processed
+  responsiveness_processed Boolean? @default(false)
+
+  mainComments  mainComments[]
+  childComments childComments[]
+  postLikes     likes[]
 
   @@index([client_account, kategori, platform])
   @@index([username])
@@ -238,9 +209,6 @@ model fairScoresDaily {
   responsiveness_bobot Float?    @db.Float
   fair_score           Float?    @db.Float
   nilai_aktifitas      Float?    @db.Float
-
-  @@unique([client_account, kategori, platform, username, date], map: "unique_daily_combination")
-  @@index([kategori, platform, date])
 }
 
 model fairScoresMonthly {
@@ -264,9 +232,6 @@ model fairScoresMonthly {
   responsiveness_score Float?    @db.Float
   responsiveness_bobot Float?    @db.Float
   fair_score           Float?    @db.Float
-
-  @@unique([client_account, kategori, platform, username, date], map: "unique_monthly_combination")
-  @@index([kategori, platform, date])
 }
 
 model listKeywords {
@@ -280,13 +245,13 @@ model listKeywords {
 model listCustomRequest {
   list_id        Int    @id @default(autoincrement())
   unique_id_post String @db.VarChar(255)
-  
+
   @@index([unique_id_post])
 }
 
 model mitra {
-  mitra_id Int    @id @default(autoincrement())
-  email    String @db.VarChar(255)
-  password String @db.VarChar(255)
-  name     String @db.VarChar(255)
+  mitra_id Int     @id @default(autoincrement())
+  email    String  @db.VarChar(255)
+  password String  @db.VarChar(255)
+  username String? @db.VarChar(255)
 }
