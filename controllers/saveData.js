@@ -40,6 +40,7 @@ const saveListAkun = async (listAkun) => {
 
 const saveDataUser = async (kategori, platform, startDate, endDate) => {
     try {
+        console.log(startDate, endDate);
         if (typeof startDate === 'string') startDate = new Date(startDate);
         if (typeof endDate === 'string') endDate = new Date(endDate);
 

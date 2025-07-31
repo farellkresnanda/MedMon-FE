@@ -171,35 +171,27 @@ router.get('/getFollowers', async (req, res) => {
                 client_account,
                 followers AS value,
                 platform,
-                platform,
-            MAX(followers) OVER () AS max_value
+                MAX(followers) OVER () AS max_value
             FROM (
                 SELECT
-                username,
-                client_account,
-                followers,
-                platform,
-                platform,
-                ROW_NUMBER() OVER (PARTITION BY username, client_account ORDER BY DATE(date) DESC) AS row_num
+                    username,
+                    client_account,
+                    followers,
+                    platform,
+                    ROW_NUMBER() OVER (PARTITION BY username, client_account ORDER BY DATE(date) DESC) AS row_num
                 FROM
-                fairScoresDaily
-                fairScoresDaily
+                    fairScoresDaily
                 WHERE
-                kategori = ?
-                AND platform = ?
-                kategori = ?
-                AND platform = ?
-                AND DATE(date) BETWEEN DATE(?) AND DATE(?)
+                    kategori = ?
+                    AND platform = ?
+                    AND DATE(date) BETWEEN DATE(?) AND DATE(?)
                 ) AS ranked
             WHERE
                 row_num = 1
             ORDER BY value DESC;
-            ORDER BY value DESC;
         `;
 
         const queryParams = [
-            req.query['kategori'],
-            req.query['platform'],
             req.query['kategori'],
             req.query['platform'],
             req.query['start_date'],
