@@ -240,7 +240,7 @@ router.get("/getDailyActivities", async (req, res) => {
                 client_account,
                 nilai_aktifitas AS value,
                 platform,
-                CONVERT_TZ(date, '+00:00', '+07:00') AS date
+                date AS date
             FROM fairscoresdaily
             WHERE
                 kategori = ?
@@ -325,7 +325,7 @@ router.get("/getDailyInteractions", async (req, res) => {
                 client_account,
                 interactions AS value,
                 platform,
-                CONVERT_TZ(date, '+00:00', '+07:00') AS date
+                date AS date
             FROM fairscoresdaily
             WHERE
                 kategori = ?
@@ -333,12 +333,9 @@ router.get("/getDailyInteractions", async (req, res) => {
                 AND DATE(date) BETWEEN DATE(?) AND DATE(?)
             ORDER BY
                 date ASC
-                date ASC
         `;
 
     const queryParams = [
-      req.query["kategori"],
-      req.query["platform"],
       req.query["kategori"],
       req.query["platform"],
       req.query["start_date"],
@@ -354,8 +351,6 @@ router.get("/getDailyInteractions", async (req, res) => {
       errors: null,
     });
   } catch (error) {
-    console.error("Error fetching daily followers:", error);
-    res.status(500).send("Failed to fetch daily followers");
     console.error("Error fetching daily followers:", error);
     res.status(500).send("Failed to fetch daily followers");
   }
@@ -418,7 +413,7 @@ router.get("/getDailyResponsiveness", async (req, res) => {
                 client_account,
                 responsiveness AS value,
                 platform,
-                CONVERT_TZ(date, '+00:00', '+07:00') AS date
+                date AS date
             FROM fairscoresdaily
             WHERE
                 kategori = ?
@@ -506,7 +501,7 @@ router.get("/getFairScores", async (req, res) => {
                 activities AS fairA,
                 interactions AS fairI,
                 responsiveness AS fairR,
-                CONVERT_TZ(date, '+00:00', '+07:00') AS date,
+                date AS date,
                 platform,
                 RANK() OVER (PARTITION BY kategori, DATE(date) ORDER BY fair_score DESC) AS ranking
             FROM fairscoresdaily
@@ -1317,7 +1312,7 @@ router.get("/getPost", async (req, res) => {
   try {
     const query = `
             SELECT 
-            CONVERT_TZ(created_at, '+00:00', '+07:00') AS created_at,
+            created_at AS created_at,
             followers as Followers,
             comments as Comments,
             likes as Likes,
@@ -1792,36 +1787,35 @@ router.get("/getFairDataInsights", async (req, res) => {
       });
     }
 
-    const today = new Date(); // Tanggal saat ini (UTC)
-    const selectedMonth = new Date(`${month}-01`); // Awal bulan yang dipilih
+    const today = new Date();
+    const selectedMonth = new Date(`${month}-01`);
 
     let endDate;
     if (
       today.getFullYear() === selectedMonth.getFullYear() &&
       today.getMonth() === selectedMonth.getMonth()
     ) {
-      endDate = toJakartaDateString(today); // Jika bulan ini, gunakan tanggal hari ini dengan offset Jakarta
+      endDate = today.toISOString().split("T")[0];
     } else {
       const lastDayOfMonth = new Date(
         selectedMonth.getFullYear(),
         selectedMonth.getMonth() + 1,
         0
       );
-      endDate = toJakartaDateString(lastDayOfMonth); // Akhir bulan dengan offset Jakarta
+      endDate = lastDayOfMonth.toISOString().split("T")[0];
     }
 
-    const startDate = `${month}-01`; // Awal bulan
+    const startDate = `${month}-01`;
 
     console.info("Start Date:", startDate);
     console.info("End Date:", endDate);
 
-    // 🔍 Cari MAX(date) dengan konversi ke UTC+7
     const [maxDateResult] = await db.query(
-      `SELECT MAX((CONVERT_TZ(date, '+00:00', '+07:00'))) AS maxDate
+      `SELECT MAX(date) AS maxDate
              FROM fairscoresmonthly 
              WHERE kategori = ?
              AND LOWER(platform) = LOWER(?) 
-             AND DATE(CONVERT_TZ(date, '+00:00', '+07:00')) BETWEEN DATE(?) AND DATE(?)`,
+             AND DATE(date) BETWEEN DATE(?) AND DATE(?)`,
       [kategori, platform, startDate, endDate]
     );
 
@@ -1837,12 +1831,11 @@ router.get("/getFairDataInsights", async (req, res) => {
       });
     }
 
-    // 🔍 Ambil semua data untuk tanggal MAX dengan konversi timezone
     const [allRows] = await db.query(
-      `SELECT *, CONVERT_TZ(date, '+00:00', '+07:00') AS local_date
+      `SELECT *, date AS local_date
              FROM fairscoresmonthly
              WHERE kategori = ?
-             AND LOWER(platform) = LOWER(?) AND CONVERT_TZ(date, '+00:00', '+07:00') = ?`,
+             AND LOWER(platform) = LOWER(?) AND date = ?`,
       [kategori, platform, maxDate]
     );
 
@@ -1855,13 +1848,12 @@ router.get("/getFairDataInsights", async (req, res) => {
       });
     }
 
-    // 🔹 Urutkan berdasarkan fair_score (DESC) dan beri ranking
     const sortedRows = allRows.sort((a, b) => b.fair_score - a.fair_score);
     const rankedData = sortedRows.map((row, index) => ({
       rank: index + 1,
       platform: row.platform,
       username: row.username,
-      date: row.local_date, // Sudah sesuai waktu Jakarta
+      date: row.local_date,
       followers: row.followers,
       activities: row.activities,
       interactions: row.interactions,
@@ -1869,8 +1861,8 @@ router.get("/getFairDataInsights", async (req, res) => {
       fair_score: row.fair_score,
     }));
 
-    const top3 = rankedData.slice(0, 3); // Ambil top 3 akun
-    const requestedUser = rankedData.find((row) => row.username === username); // Akun yang diminta
+    const top3 = rankedData.slice(0, 3);
+    const requestedUser = rankedData.find((row) => row.username === username);
     const responseData = top3.some((user) => user.username === username)
       ? top3
       : [...top3, requestedUser];
@@ -1894,10 +1886,9 @@ router.get("/getGrowthData", async (req, res) => {
   try {
     const connection = await db.getConnection();
 
-    // Followers (from fairscoresdaily)
     const [followersResult] = await connection.query(
       `
-            SELECT CONVERT_TZ(date, '+00:00', '+07:00') AS date, followers
+            SELECT date AS date, followers
             FROM fairscoresmonthly
             WHERE username = ? AND platform = ? AND DATE(date) BETWEEN DATE(?) AND DATE(?)
             ORDER BY date ASC;
@@ -1905,10 +1896,9 @@ router.get("/getGrowthData", async (req, res) => {
       [username, platform, start_date, end_date]
     );
 
-    // Posts (from fairscoresdaily)
     const [postsResult] = await connection.query(
       `
-            SELECT CONVERT_TZ(date, '+00:00', '+07:00') AS date, activities AS posts
+            SELECT date AS date, activities AS posts
             FROM fairscoresdaily
             WHERE username = ? AND platform = ? AND DATE(date) BETWEEN DATE(?) AND DATE(?)
             ORDER BY date ASC;
@@ -1916,7 +1906,6 @@ router.get("/getGrowthData", async (req, res) => {
       [username, platform, start_date, end_date]
     );
 
-    // Engagement (from posts)
     const [engagementResult] = await connection.query(
       `
             SELECT 
@@ -1936,7 +1925,6 @@ router.get("/getGrowthData", async (req, res) => {
 
     connection.release();
 
-    // Gabung hasil
     const dataMap = {};
     const mergeData = (result, keys) => {
       result.forEach((item) => {

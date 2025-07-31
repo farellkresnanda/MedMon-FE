@@ -140,16 +140,11 @@ const processInteractions = async (date, kategori, platform) => {
              WHERE FIND_IN_SET(?, p.kategori)
                AND p.platform = ?
                AND p.username = fsd.username
-               AND DATE(p.created_at) = fsd.date) / COALESCE(
-            (SELECT COUNT(*) FROM posts p 
-             WHERE FIND_IN_SET(?, p.kategori)
-               AND p.platform = ?
-               AND p.username = fsd.username
-               AND DATE(p.created_at) = fsd.date), 1) AS interactions
+               AND DATE(p.created_at) = fsd.date) AS interactions
         FROM fairscoresdaily fsd
         WHERE fsd.date = ? AND fsd.kategori = ? AND fsd.platform = ?
     `,
-    [kategori, platform, kategori, platform, date, kategori, platform]
+    [kategori, platform, date, kategori, platform]
   );
 
   const updates = rows.map((row) => [
