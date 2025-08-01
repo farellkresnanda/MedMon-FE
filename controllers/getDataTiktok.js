@@ -22,8 +22,8 @@ const getDataUser = async (
   try {
     const [rows] = await db.query(
       `
-            SELECT * FROM listakun 
-            WHERE platform = ? 
+            SELECT * FROM listakun
+            WHERE platform = ?
             AND FIND_IN_SET(?, kategori)
         `,
       [platform, kategori]
@@ -57,9 +57,9 @@ const getDataUser = async (
 
               const getUser = {
                 method: "GET",
-                url: "https://tiktok-api15.p.rapidapi.com/index/Tiktok/getUserInfo",
+                url: "https://tiktok-api23.p.rapidapi.com/api/user/info",
                 params: {
-                  unique_id: `@${row.username}`,
+                  uniqueId: `${row.username}`,
                 },
                 headers: {
                   "X-RapidAPI-Key": process.env.RAPIDAPI_TIKTOK_KEY,
@@ -69,7 +69,8 @@ const getDataUser = async (
 
               const response = await axios.request(getUser);
 
-              if (!response.data?.data) {
+              // Perbaikan: sesuaikan dengan struktur response baru
+              if (!response.data?.userInfo) {
                 const warnMsg = `🚫 No data found for user: ${row.username}`;
                 console.warn(warnMsg);
                 logBuffer.push(warnMsg);
@@ -77,7 +78,7 @@ const getDataUser = async (
                 break;
               }
 
-              const userData = response.data.data;
+              const userData = response.data.userInfo;
 
               const user = {
                 client_account: row.client_account,
@@ -89,6 +90,7 @@ const getDataUser = async (
                 following: userData.stats.followingCount || 0,
                 mediaCount: userData.stats.videoCount || 0,
                 profile_pic_url: userData.user.avatarThumb || "",
+                secUid: userData.user.secUid || "",
               };
 
               await save.saveUser(user);
@@ -106,7 +108,7 @@ const getDataUser = async (
               retryCount++;
 
               const errMsg = error.response
-                ? `❌ API Error for ${row.username}: ${error.response.status}`
+                ? `❌ API Error for ${row.username}: ${error.response.status} - ${error.message}`
                 : `❌ Request failed for ${row.username}: ${error.message}`;
 
               console.error(errMsg);
@@ -138,7 +140,12 @@ const getDataUser = async (
 };
 
 // Fungsi untuk mendapatkan data Post dari API
-const getDataPost = async (kategori = null, platform = null) => {
+const getDataPost = async (
+  kategori = null,
+  platform = null,
+  startDate,
+  endDate
+) => {
   try {
     const [rows] = await db.query(
       `
@@ -151,9 +158,6 @@ const getDataPost = async (kategori = null, platform = null) => {
     if (!rows.length) {
       return console.log("No users found.");
     }
-
-    const endDate = DateTime.now().setZone("Asia/Jakarta").minus({ days: 5 });
-    const endDateObj = endDate.toMillis();
 
     const batchSize = 10;
     const rowBatches = chunkArray(rows, batchSize);
@@ -168,48 +172,54 @@ const getDataPost = async (kategori = null, platform = null) => {
 
           while (retryCount < maxRetries) {
             try {
-              console.info(`🔍 Fetching profile for: ${row.username}`);
+              console.info(`🔍 Fetching posts for: ${row.username}`);
 
-              const userInfoRes = await axios.request({
-                method: "GET",
-                url: "https://tiktok-api15.p.rapidapi.com/index/Tiktok/getUserInfo",
-                params: { unique_id: `@${row.username}` },
-                headers: {
-                  "X-RapidAPI-Key": process.env.RAPIDAPI_TIKTOK_KEY,
-                  "X-RapidAPI-Host": process.env.RAPIDAPI_TIKTOK_HOST,
-                },
-              });
+              // Fetch user data from users table instead of API
+              const [userRows] = await db.query(
+                `SELECT * FROM users WHERE username = ? AND platform = ?`,
+                [row.username, platform]
+              );
 
-              const userData = userInfoRes.data?.data;
-              if (!userData) {
-                console.warn(`🚫 No data found for ${row.username}`);
+              if (!userRows.length) {
+                console.warn(
+                  `🚫 No user data found in database for ${row.username}`
+                );
                 break;
               }
 
-              await save.saveUser({
-                client_account: row.client_account,
-                kategori,
-                platform,
-                username: row.username,
-                user_id: userData.user.id,
-                followers: userData.stats.followerCount || 0,
-                following: userData.stats.followingCount || 0,
-                mediaCount: userData.stats.videoCount || 0,
-                profile_pic_url: userData.user.avatarThumb || "",
-              });
+              const userData = userRows[0];
+              if (!userData.secUid) {
+                console.warn(
+                  `🚫 No secUid found for ${row.username}, skipping posts fetch`
+                );
+                break;
+              }
 
-              let cursor = null;
+              let cursor = 0;
               let hasMore = true;
               let pageCount = 0;
+              const maxPages = 50; // Limit to prevent infinite loops
 
-              while (hasMore) {
+              const endDateObj = new Date(endDate);
+              endDateObj.setDate(endDateObj.getDate() + 1); // Add 1 day to include posts on endDate
+              const endDateTimestamp = endDateObj.getTime();
+              if (isNaN(endDateObj)) {
+                throw new Error("Invalid end_date format");
+              }
+              const startDateObj = new Date(startDate).getTime();
+              if (isNaN(startDateObj)) {
+                throw new Error("Invalid start_date format");
+              }
+              const endTimestamp = Math.floor(endDateTimestamp / 1000);
+              const startTimestamp = Math.floor(startDateObj / 1000);
+              while (hasMore && pageCount < maxPages) {
                 const getPost = {
                   method: "GET",
-                  url: "https://tiktok-api15.p.rapidapi.com/index/Tiktok/getUserVideos",
+                  url: "https://tiktok-api23.p.rapidapi.com/api/user/posts",
                   params: {
-                    unique_id: `@${row.username}`,
-                    count: 35,
-                    ...(cursor && { cursor }),
+                    secUid: userData.secUid,
+                    count: 30,
+                    cursor: cursor,
                   },
                   headers: {
                     "X-RapidAPI-Key": process.env.RAPIDAPI_TIKTOK_KEY,
@@ -217,83 +227,104 @@ const getDataPost = async (kategori = null, platform = null) => {
                   },
                 };
 
-                const res = await axios.request(getPost);
-                const userPosts = res.data?.data?.videos || [];
+                try {
+                  const postResponse = await axios.request(getPost);
+                  const postData = postResponse.data?.data;
 
-                if (!userPosts.length) break;
-
-                let pinnedCount = 0;
-                let stopLoop = false;
-
-                for (const item of userPosts) {
-                  const postDate = new Date(item.create_time * 1000).getTime();
-                  const isPinned = item.is_top ? 1 : 0;
-
-                  // Skip post jika sudah terlalu lama dan bukan pinned
-                  if (!isPinned && postDate < endDateObj) {
-                    stopLoop = true;
-                    console.log(
-                      `🛑 TikTok: Found old post for ${row.username}, stopping pagination`
-                    );
-                    continue;
+                  if (
+                    !postData ||
+                    !postData.itemList ||
+                    postData.itemList.length === 0
+                  ) {
+                    console.log(`✅ No more posts for ${row.username}`);
+                    hasMore = false;
+                    break;
                   }
 
-                  // Skip pinned post kalau sudah 3
-                  if (isPinned && pinnedCount >= 3) {
-                    console.log(
-                      `📌 TikTok: Skip pinned post (limit 3 reached) for ${row.username}`
-                    );
-                    continue;
+                  let postsInDateRange = 0;
+                  let allPostsTooOld = true;
+
+                  for (const post of postData.itemList) {
+                    const postCreateTime = post.createTime;
+
+                    // Check if post is within our date range
+                    if (
+                      postCreateTime >= startTimestamp &&
+                      postCreateTime <= endTimestamp
+                    ) {
+                      postsInDateRange++;
+                      allPostsTooOld = false;
+
+                      // Save the post
+                      await save.savePost({
+                        client_account: row.client_account,
+                        kategori,
+                        platform,
+                        username: row.username,
+                        user_id: userData.user_id,
+                        post_id: post.id,
+                        post_url: `https://www.tiktok.com/@${row.username}/video/${post.id}`,
+                        caption: post.desc || "",
+                        media_type: post.video ? "video" : "photos",
+                        media_url: post.video?.playAddr || "",
+                        thumbnail_url: post.video?.cover || "",
+                        playCount: post.stats?.playCount || 0,
+                        likes: post.stats?.diggCount || 0,
+                        comments: post.stats?.commentCount || 0,
+                        shareCount: post.stats?.shareCount || 0,
+                        created_time: new Date(postCreateTime * 1000),
+                        media_name: post.video ? "video" : "photos",
+                        unique_id_post: post.id,
+                        created_at: new Date(postCreateTime * 1000),
+                        post_code: `https://www.tiktok.com/@${row.username}/video/${post.id}`,
+                        product_type: post.video ? "video" : "photos",
+                        tagged_users: null,
+                        is_pinned: false,
+                        followers: post.authorStats?.followerCount || 0,
+                        following: post.authorStats?.followingCount || 0,
+                        collectCount: post.stats?.collectCount || 0,
+                        downloadCount: post.stats?.downloadCount || 0,
+                        collabs_with: null,
+                      });
+                    } else if (postCreateTime < startTimestamp) {
+                      console.log(
+                        `📅 Reached posts older than ${startDate} for ${row.username}`
+                      );
+                      allPostsTooOld = true;
+                    } else {
+                      // Post is newer than end date, skip but continue
+                      allPostsTooOld = false;
+                    }
                   }
 
-                  if (isPinned) pinnedCount++;
-
-                  const post = {
-                    client_account: row.client_account,
-                    kategori,
-                    platform,
-                    user_id: item.author.id,
-                    unique_id_post: item.video_id,
-                    username: row.username,
-                    created_at: DateTime.fromMillis(postDate, {
-                      zone: "Asia/Jakarta",
-                    }).toFormat("yyyy-MM-dd HH:mm:ss"),
-                    thumbnail_url: item.cover,
-                    caption: item.title || "",
-                    post_code: item.code || "",
-                    comments: item.comment_count,
-                    likes: item.digg_count,
-                    media_name: item.media_name || "",
-                    product_type: item.media_type || "",
-                    tagged_users:
-                      item.tagged_users?.in
-                        ?.map((tag) => tag.user.username)
-                        .join(", ") || "",
-                    is_pinned: isPinned,
-                    followers: userData.stats.followerCount || 0,
-                    following: userData.stats.followingCount || 0,
-                    playCount: item.play_count || 0,
-                    collectCount: item.collect_count || 0,
-                    shareCount: item.share_count || 0,
-                    downloadCount: item.download_count || 0,
-                  };
-
-                  await save.savePost(post);
-                }
-
-                if (stopLoop) {
-                  console.warn(
-                    `🛑 Stopped pagination early due to old post for ${row.username}`
+                  console.log(
+                    `📊 Page ${pageCount + 1} for ${
+                      row.username
+                    }: ${postsInDateRange} posts in date range`
                   );
-                  break;
-                }
 
-                cursor = res.data?.data?.cursor;
-                hasMore = res.data?.data?.hasMore;
-                pageCount++;
-                console.log(
-                  `📄 Processed page ${pageCount} for ${row.username}`
-                );
+                  // Update pagination
+                  if (postData.hasMore && postData.cursor && !allPostsTooOld) {
+                    cursor = parseInt(postData.cursor);
+                    pageCount++;
+                  } else {
+                    hasMore = false;
+                  }
+
+                  // If all posts in this batch are too old, stop pagination
+                  if (allPostsTooOld) {
+                    hasMore = false;
+                  }
+
+                  // Add delay between requests to avoid rate limiting
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                } catch (postError) {
+                  console.error(
+                    `❌ Error fetching posts for ${row.username}:`,
+                    postError.message
+                  );
+                  hasMore = false;
+                }
               }
 
               console.info(`✅ Finished posts for: ${row.username}`);
@@ -384,97 +415,123 @@ const getDataPostv2 = async (kategori = null, platform = null, start_date) => {
                 profile_pic_url: userData.user.avatarThumb || "",
               });
 
-              let cursor = null;
+              let cursor = 0;
               let hasMore = true;
               let pageCount = 0;
+              const maxPages = 50; // Limit to prevent infinite loops
 
-              while (hasMore) {
+              // Calculate date range (e.g., last 30 days)
+              const endDate = new Date();
+              const startDate = new Date(
+                endDate.getTime() - 30 * 24 * 60 * 60 * 1000
+              ); // 30 days ago
+              const endTimestamp = Math.floor(endDate.getTime() / 1000);
+              const startTimestamp = Math.floor(startDate.getTime() / 1000);
+
+              while (hasMore && pageCount < maxPages) {
                 const getPost = {
                   method: "GET",
-                  url: "https://tiktok-api15.p.rapidapi.com/index/Tiktok/getUserVideos",
+                  url: "https://tiktok-api23.p.rapidapi.com/api/user/oldest-posts",
                   params: {
-                    unique_id: `@${row.username}`,
-                    count: 35,
-                    ...(cursor && { cursor }),
+                    secUid: userData.user.secUid,
+                    count: 30,
+                    cursor: cursor,
                   },
                   headers: {
                     "X-RapidAPI-Key": process.env.RAPIDAPI_TIKTOK_KEY,
-                    "X-RapidAPI-Host": process.env.RAPIDAPI_TIKTOK_HOST,
+                    "X-RapidAPI-Host": "tiktok-api23.p.rapidapi.com",
                   },
                 };
 
-                const res = await axios.request(getPost);
-                const userPosts = res.data?.data?.videos || [];
+                try {
+                  const postResponse = await axios.request(getPost);
+                  const postData = postResponse.data?.data;
 
-                if (!userPosts.length) break;
-
-                let pinnedCount = 0;
-                let stopLoop = false;
-
-                for (const item of userPosts) {
-                  const postDate = new Date(item.create_time * 1000).getTime();
-                  const isPinned = item.is_top ? 1 : 0;
-
-                  // Skip post jika sudah terlalu lama dan bukan pinned
-                  if (!isPinned && postDate < endDateObj) {
-                    stopLoop = true;
-                    console.log(
-                      `🛑 TikTok: Found old post for ${row.username}, stopping pagination`
-                    );
-                    continue;
+                  if (
+                    !postData ||
+                    !postData.itemList ||
+                    postData.itemList.length === 0
+                  ) {
+                    console.log(`✅ No more posts for ${row.username}`);
+                    hasMore = false;
+                    break;
                   }
 
-                  // Skip pinned post kalau sudah 3
-                  if (isPinned && pinnedCount >= 3) {
-                    console.log(
-                      `📌 TikTok: Skip pinned post (limit 3 reached) for ${row.username}`
-                    );
-                    continue;
+                  let postsInDateRange = 0;
+                  let allPostsTooOld = true;
+
+                  for (const post of postData.itemList) {
+                    const postCreateTime = post.createTime;
+
+                    // Check if post is within our date range
+                    if (
+                      postCreateTime >= startTimestamp &&
+                      postCreateTime <= endTimestamp
+                    ) {
+                      postsInDateRange++;
+                      allPostsTooOld = false;
+
+                      // Save the post
+                      await save.savePost({
+                        client_account: row.client_account,
+                        kategori,
+                        platform,
+                        username: row.username,
+                        user_id: userData.user.id,
+                        post_id: post.id,
+                        post_url: `https://www.tiktok.com/@${row.username}/video/${post.id}`,
+                        caption: post.desc || "",
+                        media_type: "video",
+                        media_url: post.video?.playAddr || "",
+                        thumbnail_url: post.video?.cover || "",
+                        playCount: post.stats?.playCount || 0,
+                        likes: post.stats?.diggCount || 0,
+                        comments: post.stats?.commentCount || 0,
+                        shareCount: post.stats?.shareCount || 0,
+                        created_time: new Date(postCreateTime * 1000),
+                      });
+                    } else if (postCreateTime < startTimestamp) {
+                      // Post is too old, we can stop fetching more pages
+                      console.log(
+                        `📅 Reached posts older than ${startDate.toISOString()} for ${
+                          row.username
+                        }`
+                      );
+                      allPostsTooOld = true;
+                    } else {
+                      // Post is newer than end date, skip but continue
+                      allPostsTooOld = false;
+                    }
                   }
 
-                  if (isPinned) pinnedCount++;
+                  console.log(
+                    `📊 Page ${pageCount + 1} for ${
+                      row.username
+                    }: ${postsInDateRange} posts in date range`
+                  );
 
-                  const post = {
-                    client_account: row.client_account,
-                    kategori,
-                    platform,
-                    user_id: item.author.id,
-                    unique_id_post: item.video_id,
-                    username: row.username,
-                    created_at: new Date(postDate).toLocaleDateString("en-CA", {
-                      timeZone: "Asia/Jakarta",
-                    }),
-                    thumbnail_url: item.cover,
-                    caption: item.title || "",
-                    post_code: item.code || "",
-                    comments: item.comment_count,
-                    likes: item.digg_count,
-                    media_name: item.media_name || "",
-                    product_type: item.media_type || "",
-                    tagged_users:
-                      item.tagged_users?.in
-                        ?.map((tag) => tag.user.username)
-                        .join(", ") || "",
-                    is_pinned: isPinned,
-                    followers: userData.stats.followerCount || 0,
-                    following: userData.stats.followingCount || 0,
-                    playCount: item.play_count || 0,
-                    collectCount: item.collect_count || 0,
-                    shareCount: item.share_count || 0,
-                    downloadCount: item.download_count || 0,
-                  };
+                  // Update pagination
+                  if (postData.hasMore && postData.cursor && !allPostsTooOld) {
+                    cursor = parseInt(postData.cursor);
+                    pageCount++;
+                  } else {
+                    hasMore = false;
+                  }
 
-                  await save.savePost(post);
+                  // If all posts in this batch are too old, stop pagination
+                  if (allPostsTooOld) {
+                    hasMore = false;
+                  }
+
+                  // Add delay between requests to avoid rate limiting
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                } catch (postError) {
+                  console.error(
+                    `❌ Error fetching posts for ${row.username}:`,
+                    postError.message
+                  );
+                  hasMore = false;
                 }
-
-                if (stopLoop) break;
-
-                cursor = res.data?.data?.cursor;
-                hasMore = res.data?.data?.hasMore;
-                pageCount++;
-                console.log(
-                  `📄 Processed page ${pageCount} for ${row.username}`
-                );
               }
 
               console.info(`✅ Finished posts for: ${row.username}`);

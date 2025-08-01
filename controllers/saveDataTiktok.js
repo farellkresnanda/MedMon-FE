@@ -3,8 +3,8 @@ const connection = require("../models/db");
 // Fungsi untuk menyimpan data user ke database
 const saveUser = async (user) => {
   const sql = `
-        INSERT INTO users (client_account, kategori, platform, username, user_id, followers, following, mediaCount, profile_pic_url) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (client_account, kategori, platform, username, user_id, followers, following, mediaCount, profile_pic_url, secUid) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             client_account = IF(
                         FIND_IN_SET(VALUES(client_account), client_account) > 0, 
@@ -20,7 +20,9 @@ const saveUser = async (user) => {
             followers = VALUES(followers),
             following = VALUES(following),
             mediaCount = VALUES(mediaCount),
-            profile_pic_url = VALUES(profile_pic_url)
+            profile_pic_url = VALUES(profile_pic_url),
+            secUid = VALUES(secUid),
+            update_date = NOW()
     `;
   connection.query(
     sql,
@@ -34,6 +36,7 @@ const saveUser = async (user) => {
       user.following,
       user.mediaCount,
       user.profile_pic_url,
+      user.secUid,
     ],
     (err, result) => {
       if (err) {
@@ -55,8 +58,8 @@ const savePost = async (post) => {
   const sql = `
         INSERT INTO posts (client_account, kategori, platform, username, user_id, unique_id_post, created_at, thumbnail_url, caption, post_code, 
             comments, likes, media_name, product_type, tagged_users, is_pinned, followers, following, playCount,
-            collectCount, shareCount, downloadCount)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            collectCount, shareCount, downloadCount, collabs_with)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
         ON DUPLICATE KEY UPDATE
             client_account = IF(
                         FIND_IN_SET(VALUES(client_account), client_account) > 0, 
