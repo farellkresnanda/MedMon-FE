@@ -594,10 +594,10 @@ const getDataComment = async (kategori = null, platform = null) => {
 
           while (hasMore) {
             const response = await axios.get(
-              "https://tiktok-api15.p.rapidapi.com/index/Tiktok/getCommentListByVideo",
+              "https://tiktok-api23.p.rapidapi.com/api/post/comments",
               {
                 params: {
-                  url: row.unique_id_post,
+                  videoId: row.unique_id_post,
                   count: 50,
                   ...(cursor && { cursor }),
                 },
@@ -607,8 +607,7 @@ const getDataComment = async (kategori = null, platform = null) => {
                 },
               }
             );
-
-            const comments = response?.data?.data?.comments || [];
+            const comments = response?.data?.comments || [];
             if (!comments.length) break;
 
             for (const item of comments) {
@@ -620,21 +619,21 @@ const getDataComment = async (kategori = null, platform = null) => {
                 user_id: row.user_id,
                 username: row.username,
                 unique_id_post: row.unique_id_post,
-                comment_unique_id: item.id,
+                comment_unique_id: item.cid,
                 created_at: postDate
                   .toISOString()
                   .slice(0, 19)
                   .replace("T", " "),
-                commenter_username: item.user.unique_id,
-                commenter_userid: item.user.id,
+                commenter_username: item.user.nickname,
+                commenter_userid: item.user.uid,
                 comment_text: item.text,
                 comment_like_count: item.digg_count,
-                child_comment_count: item.reply_total,
+                child_comment_count: item.reply_comment_total,
               });
             }
 
-            cursor = response.data.data.cursor;
-            hasMore = response.data.data.hasMore;
+            cursor = response.data.cursor;
+            hasMore = response.data.has_more;
             pageCount++;
             console.info(`${pageCount} page, processed`);
           }
@@ -720,11 +719,11 @@ const getDataChildComment = async (kategori = null, platform = null) => {
 
           while (hasMore) {
             const response = await axios.get(
-              "https://tiktok-api15.p.rapidapi.com/index/Tiktok/getReplyListByCommentId",
+              "https://tiktok-api23.p.rapidapi.com/api/post/comment/replies",
               {
                 params: {
-                  comment_id: row.comment_unique_id,
-                  video_id: row.unique_id_post,
+                  commentId: row.comment_unique_id,
+                  videoId: row.unique_id_post,
                   count: 50,
                   ...(cursor && { cursor }),
                 },
@@ -735,7 +734,7 @@ const getDataChildComment = async (kategori = null, platform = null) => {
               }
             );
 
-            const replies = response?.data?.data?.comments || [];
+            const replies = response?.data?.comments || [];
             if (!replies.length) break;
 
             for (const reply of replies) {
@@ -748,17 +747,17 @@ const getDataChildComment = async (kategori = null, platform = null) => {
                 username: row.username,
                 unique_id_post: row.unique_id_post,
                 comment_unique_id: row.comment_unique_id,
-                child_comment_unique_id: reply.id,
+                child_comment_unique_id: reply.cid,
                 created_at: date.toISOString().slice(0, 19).replace("T", " "),
                 child_commenter_username: reply.user.unique_id,
-                child_commenter_userid: reply.user.id,
+                child_commenter_userid: reply.user.uid,
                 child_comment_text: reply.text,
                 child_comment_like_count: reply.digg_count,
               });
             }
 
-            cursor = response.data.data.cursor;
-            hasMore = response.data.data.hasMore;
+            cursor = response.data.cursor;
+            hasMore = response.data.hasMore;
             pageCount++;
             console.info(`${pageCount} page, processed`);
           }

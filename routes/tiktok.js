@@ -146,9 +146,9 @@ router.get("/getComment", async (req, res) => {
     const { startDate, endDate } = dateRange; // Destructuring tanggal
 
     // Step 1: Fetch Main Comments
-    console.log("🚀 Fetching main comments...");
-    await getDataTiktok.getDataComment(kategori, "TikTok", startDate, endDate);
-    console.log("✅ Main comments processing completed.");
+    // console.log("🚀 Fetching main comments...");
+    // await getDataTiktok.getDataComment(kategori, "TikTok", startDate, endDate);
+    // console.log("✅ Main comments processing completed.");
 
     // Step 2: Fetch Child Comments
     console.log("🚀 Fetching child comments...");

@@ -131,7 +131,7 @@ const savePost = async (post) => {
 // Fungsi untuk menyimpan data comment ke database
 const saveComment = async (comment) => {
   const sql = `
-        INSERT INTO mainComments (client_account, kategori, platform, username, user_id, unique_id_post, comment_unique_id, created_at, 
+        INSERT INTO maincomments (client_account, kategori, platform, username, user_id, unique_id_post, comment_unique_id, created_at, 
             commenter_username, commenter_userid, comment_text, comment_like_count, child_comment_count)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
