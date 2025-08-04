@@ -1573,7 +1573,6 @@ router.get("/getDailyLikes", async (req, res) => {
     ];
 
     const [rows] = await db.query(query, queryParams);
-
     res.json({
       code: 200,
       status: "OK",
