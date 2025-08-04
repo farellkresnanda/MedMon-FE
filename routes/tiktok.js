@@ -124,7 +124,7 @@ const getDateRange = async () => {
 
 // 🔹 Endpoint untuk eksekusi getComment
 router.get("/getComment", async (req, res) => {
-  const { kategori } = req.query;
+  const { kategori, startDate, endDate } = req.query;
 
   if (!kategori) {
     return res
@@ -136,19 +136,19 @@ router.get("/getComment", async (req, res) => {
     console.info(`🔍 Fetching comments for category: ${kategori}`);
 
     // Ambil tanggal dari database
-    const dateRange = await getDateRange();
-    if (!dateRange) {
-      return res.status(500).json({
-        message: "❌ Gagal mendapatkan rentang tanggal dari database.",
-      });
-    }
+    // const dateRange = await getDateRange();
+    // if (!dateRange) {
+    //   return res.status(500).json({
+    //     message: "❌ Gagal mendapatkan rentang tanggal dari database.",
+    //   });
+    // }
 
-    const { startDate, endDate } = dateRange; // Destructuring tanggal
+    // const { startDate, endDate } = dateRange; // Destructuring tanggal
 
     // Step 1: Fetch Main Comments
-    // console.log("🚀 Fetching main comments...");
-    // await getDataTiktok.getDataComment(kategori, "TikTok", startDate, endDate);
-    // console.log("✅ Main comments processing completed.");
+    console.log("🚀 Fetching main comments...");
+    await getDataTiktok.getDataComment(kategori, "TikTok", startDate, endDate);
+    console.log("✅ Main comments processing completed.");
 
     // Step 2: Fetch Child Comments
     console.log("🚀 Fetching child comments...");

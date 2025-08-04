@@ -124,7 +124,8 @@ const getDataUser = async (
 const getDataPost = async (
   kategori = null,
   platform = null,
-  start_date = null
+  startDate,
+  endDate
 ) => {
   try {
     const [rows] = await db.query(
@@ -140,8 +141,20 @@ const getDataPost = async (
       return;
     }
 
-    const endDate = DateTime.now().setZone("Asia/Jakarta").minus({ days: 5 });
-    const endDateObj = endDate.toMillis();
+    // Validate and process date parameters
+    const endDateObj = new Date(endDate);
+    endDateObj.setDate(endDateObj.getDate() + 1); // Add 1 day to include posts on endDate
+    const endDateTimestamp = endDateObj.getTime();
+    if (isNaN(endDateTimestamp)) {
+      throw new Error("Invalid end_date format");
+    }
+    
+    const startDateObj = new Date(startDate).getTime();
+    if (isNaN(startDateObj)) {
+      throw new Error("Invalid start_date format");
+    }
+
+    console.log(`📅 Fetching posts from ${startDate} to ${endDate}`);
 
     const batchSize = 10;
     const rowBatches = chunkArray(rows, batchSize);
@@ -158,6 +171,7 @@ const getDataPost = async (
             try {
               console.info(`Fetching data for user: ${row.username}`);
 
+              // Get user info first
               const userInfoRes = await axios.request({
                 method: "GET",
                 url: "https://social-api4.p.rapidapi.com/v1/info",
@@ -177,6 +191,7 @@ const getDataPost = async (
                 break;
               }
 
+              // Save user data
               await save.saveUser({
                 client_account: row.client_account,
                 kategori,
@@ -192,8 +207,9 @@ const getDataPost = async (
               let paginationToken = null;
               let morePosts = true;
               let pageCount = 0;
+              const maxPages = 50; // Limit to prevent infinite loops
 
-              while (morePosts) {
+              while (morePosts && pageCount < maxPages) {
                 const response = await axios.request({
                   method: "GET",
                   url: "https://social-api4.p.rapidapi.com/v1/posts",
@@ -217,87 +233,106 @@ const getDataPost = async (
                 }
 
                 let pinnedCount = 0;
-                let stopLoop = false;
+                let postsInDateRange = 0;
+                let allPostsTooOld = true;
 
                 for (const item of items) {
                   const isPinned = item.is_pinned ? 1 : 0;
                   const postDate = new Date(item.taken_at * 1000).getTime();
                   const captionText = item.caption || "No Caption";
 
-                  // Skip non-pinned post yang lebih lama dari endDateObj, dan stop paginasi
-                  if (!isPinned && postDate < endDateObj) {
-                    stopLoop = true;
-                    console.log(
-                      `🛑 Instagram: Found old post for ${row.username}, stopping pagination`
-                    );
-                    continue;
+                  // Check if post is within our date range
+                  if (postDate >= startDateObj && postDate <= endDateTimestamp) {
+                    postsInDateRange++;
+                    allPostsTooOld = false;
+
+                    // Skip pinned post jika sudah melebihi 3
+                    if (isPinned && pinnedCount >= 3) {
+                      console.log(
+                        `📌 Instagram: Skip pinned post (limit 3 reached) for ${row.username}`
+                      );
+                      continue;
+                    }
+
+                    if (isPinned) pinnedCount++;
+
+                    const post = {
+                      client_account: row.client_account,
+                      kategori: row.kategori,
+                      platform: row.platform,
+                      user_id: userData.id,
+                      unique_id_post: item.id,
+                      username: row.username,
+                      created_at: DateTime.fromMillis(postDate, {
+                        zone: "Asia/Jakarta",
+                      }).toFormat("yyyy-MM-dd HH:mm:ss"),
+                      thumbnail_url: item.thumbnail_url,
+                      caption: captionText.text || captionText,
+                      post_code: item.code,
+                      comments: item.comment_count,
+                      likes: item.like_count,
+                      media_name: item.media_name,
+                      product_type: item.product_type,
+                      tagged_users:
+                        item.tagged_users?.in
+                          ?.map((tag) => tag.user.username)
+                          .join(", ") || "",
+                      is_pinned: isPinned,
+                      followers: userData.follower_count || 0,
+                      following: userData.following_count || 0,
+                      playCount: item.play_count || 0,
+                      shareCount: item.share_count || 0,
+                      collabs: item.coauthor_producers?.length > 0 ? 1 : 0,
+                      collabs_with:
+                        item.coauthor_producers?.length > 0
+                          ? item.coauthor_producers
+                              .map((user) =>
+                                user.username === row.username
+                                  ? item.user.username
+                                  : user.username
+                              )
+                              .join(",")
+                          : "",
+                    };
+
+                    await save.savePost(post);
+                  } else if (postDate < startDateObj) {
+                    // Post is too old, we can stop fetching more pages (for non-pinned posts)
+                    if (!isPinned) {
+                      console.log(
+                        `📅 Reached posts older than ${startDate} for ${row.username}`
+                      );
+                      allPostsTooOld = true;
+                    }
+                  } else {
+                    // Post is newer than end date, skip but continue
+                    allPostsTooOld = false;
                   }
-
-                  // Skip pinned post jika sudah melebihi 3
-                  if (isPinned && pinnedCount >= 3) {
-                    console.log(
-                      `📌 Instagram: Skip pinned post (limit 3 reached) for ${row.username}`
-                    );
-                    continue;
-                  }
-
-                  if (isPinned) pinnedCount++;
-
-                  const post = {
-                    client_account: row.client_account,
-                    kategori: row.kategori,
-                    platform: row.platform,
-                    user_id: row.user_id,
-                    unique_id_post: item.id,
-                    username: row.username,
-                    created_at: DateTime.fromMillis(postDate, {
-                      zone: "Asia/Jakarta",
-                    }).toFormat("yyyy-MM-dd HH:mm:ss"),
-                    thumbnail_url: item.thumbnail_url,
-                    caption: captionText.text || captionText,
-                    post_code: item.code,
-                    comments: item.comment_count,
-                    likes: item.like_count,
-                    media_name: item.media_name,
-                    product_type: item.product_type,
-                    tagged_users:
-                      item.tagged_users?.in
-                        ?.map((tag) => tag.user.username)
-                        .join(", ") || "",
-                    is_pinned: isPinned,
-                    followers: userData.follower_count || 0,
-                    following: userData.following_count || 0,
-                    playCount: item.play_count || 0,
-                    shareCount: item.share_count || 0,
-                    collabs: item.coauthor_producers?.length > 0 ? 1 : 0,
-                    collabs_with:
-                      item.coauthor_producers?.length > 0
-                        ? item.coauthor_producers
-                            .map((user) =>
-                              user.username === row.username
-                                ? item.user.username
-                                : user.username
-                            )
-                            .join(",")
-                        : "",
-                  };
-
-                  await save.savePost(post);
                 }
 
-                if (stopLoop) {
-                  console.warn(
-                    `🛑 Stopped pagination early due to old post for ${row.username}`
+                console.log(
+                  `📊 Page ${pageCount + 1} for ${row.username}: ${postsInDateRange} posts in date range`
+                );
+
+                // Update pagination
+                paginationToken = response.data?.pagination_token;
+                morePosts = !!paginationToken;
+                pageCount++;
+
+                // If all posts in this batch are too old, stop pagination
+                if (allPostsTooOld && postsInDateRange === 0) {
+                  console.log(
+                    `🛑 Instagram: All posts too old for ${row.username}, stopping pagination`
                   );
                   break;
                 }
 
-                paginationToken = response.data?.pagination_token;
-                morePosts = !!paginationToken;
-                pageCount++;
                 console.log(
                   `📄 Processed page ${pageCount} for ${row.username}`
                 );
+
+                // Add delay between pages to avoid rate limiting
+                await new Promise((resolve) => setTimeout(resolve, 1000));
               }
 
               console.info(
@@ -539,7 +574,7 @@ const getDataPostv2 = async (kategori = null, platform = null, start_date) => {
   }
 };
 
-const getDataComment = async (kategori = null, platform = null) => {
+const getDataComment = async (kategori = null, platform = null, startDate = null, endDate = null) => {
   try {
     const [rows] = await db.query(
       `
@@ -549,9 +584,9 @@ const getDataComment = async (kategori = null, platform = null) => {
               AND FIND_IN_SET(?, kategori)
               AND comments_processed = 0
               AND comments > 0
-              AND created_at > "2024-12-31"
+              AND created_at BETWEEN ? AND ?
         `,
-      [platform, kategori]
+      [platform, kategori, startDate, endDate]
     );
 
     if (!rows.length) {
@@ -669,7 +704,7 @@ const getDataComment = async (kategori = null, platform = null) => {
   }
 };
 
-const getDataChildComment = async (kategori = null, platform = null) => {
+const getDataChildComment = async (kategori = null, platform = null, startDate = null, endDate = null) => {
   try {
     const [rows] = await db.query(
       `
@@ -680,8 +715,9 @@ const getDataChildComment = async (kategori = null, platform = null) => {
               AND FIND_IN_SET(?, mc.kategori)
               AND mc.child_comments_processed = 0
               AND mc.child_comment_count > 0
+              AND p.created_at BETWEEN ? AND ?
         `,
-      [platform, kategori]
+      [platform, kategori, startDate, endDate]
     );
 
     if (!rows.length) {

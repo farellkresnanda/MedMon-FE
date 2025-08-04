@@ -561,15 +561,16 @@ const getDataPostv2 = async (kategori = null, platform = null, start_date) => {
 };
 
 // Fungsi untuk mendapatkan data Comment dari API
-const getDataComment = async (kategori = null, platform = null) => {
+const getDataComment = async (kategori = null, platform = null, startDate = null, endDate = null) => {
   try {
     const [rows] = await db.query(
       `
             SELECT * FROM posts 
             WHERE platform = ? AND FIND_IN_SET(?, kategori)
               AND comments_processed = 0 AND comments > 0
+              AND created_at BETWEEN ? AND ?
         `,
-      [platform, kategori]
+      [platform, kategori, startDate, endDate]
     );
 
     if (!rows.length) return console.log("📭 No posts found to process.");
@@ -684,7 +685,7 @@ const getDataComment = async (kategori = null, platform = null) => {
 };
 
 // Fungsi untuk mendapatkan data Child Comment dari API
-const getDataChildComment = async (kategori = null, platform = null) => {
+const getDataChildComment = async (kategori = null, platform = null, startDate = null, endDate = null) => {
   try {
     const [rows] = await db.query(
       `
@@ -693,8 +694,9 @@ const getDataChildComment = async (kategori = null, platform = null) => {
             WHERE mc.platform = ? AND FIND_IN_SET(?, mc.kategori)
               AND mc.child_comments_processed = 0
               AND mc.child_comment_count > 0
+              AND p.created_at BETWEEN ? AND ?
         `,
-      [platform, kategori]
+      [platform, kategori, startDate, endDate]
     );
 
     if (!rows.length) return console.log("📭 No child comments to process.");

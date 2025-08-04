@@ -50,12 +50,12 @@ router.get("/getData", async (req, res) => {
 
 // ✅ Ambil post berdasarkan kategori
 router.get("/getPost", async (req, res) => {
-  const { kategori } = req.query;
+  const { kategori, startDate, endDate } = req.query;
   if (!kategori)
     return res.status(400).send("❌ kategori parameter is required.");
 
   try {
-    await getDataIg.getDataPost(kategori, PLATFORM);
+    await getDataIg.getDataPost(kategori, PLATFORM, startDate, endDate);
     res
       .status(200)
       .send(
@@ -87,16 +87,16 @@ router.get("/getPost/v2", async (req, res) => {
 
 // ✅ Ambil komentar + child comments berdasarkan kategori
 router.get("/getComment", async (req, res) => {
-  const { kategori } = req.query;
+  const { kategori, startDate, endDate } = req.query;
   if (!kategori)
     return res
       .status(400)
       .json({ message: "❌ kategori parameter is required." });
 
   try {
-    await getDataIg.getDataComment(kategori, PLATFORM);
+    await getDataIg.getDataComment(kategori, PLATFORM, startDate, endDate);
     console.info("debug");
-    await getDataIg.getDataChildComment(kategori, PLATFORM);
+    await getDataIg.getDataChildComment(kategori, PLATFORM, startDate, endDate);
     res
       .status(200)
       .send(

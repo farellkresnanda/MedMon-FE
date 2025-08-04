@@ -485,7 +485,7 @@ router.get("/exportFair", async (req, res) => {
 // POST /api/responsiveness
 router.post("/calculateResponsiveness", async (req, res) => {
   try {
-    const { kategori } = req.body;
+    const { kategori, platform } = req.body;
 
     if (!kategori) {
       return res.status(400).json({
@@ -493,8 +493,9 @@ router.post("/calculateResponsiveness", async (req, res) => {
         message: "kategori dan platform harus diisi.",
       });
     }
+    console.info(kategori, platform);
 
-    await calculateResponsivenessPerPost(kategori);
+    await calculateResponsivenessPerPost(kategori, platform);
 
     res.json({
       success: true,

@@ -2,9 +2,9 @@ const connection = require("../models/db");
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const calculateResponsivenessPerPost = async (kategori) => {
+const calculateResponsivenessPerPost = async (kategori, platform) => {
   console.info(
-    `[INFO] Starting responsiveness calculation per post for kategori: ${kategori}`
+    `[INFO] Starting responsiveness calculation per post for kategori: ${kategori}, platform: ${platform}`
   );
 
   const [posts] = await connection.query(
@@ -12,11 +12,12 @@ const calculateResponsivenessPerPost = async (kategori) => {
         SELECT *
         FROM posts
         WHERE comments > 0
-        AND responsiveness_processed = 0
-        AND FIND_IN_SET(?, kategori)         
+        AND (responsiveness_processed = 0 OR responsiveness_processed IS NULL)
+        AND FIND_IN_SET(?, kategori)
         AND created_at > "2024-12-31"
+        AND platform = ?
     `,
-    [kategori]
+    [kategori, platform]
   );
 
   if (!posts.length) {
